@@ -20,3 +20,9 @@
         match namespace="^noctalia-wallpaper*"
         place-within-backdrop true
     }
+
+    window-rule {
+        match title=r#"(?i)picture.in.picture|[Кк]артинка в картинке"#
+        open-floating true
+        open-focused false
+    }
