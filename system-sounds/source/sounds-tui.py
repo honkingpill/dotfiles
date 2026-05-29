@@ -6,6 +6,7 @@ import re
 import shutil
 import subprocess
 import sys
+import tempfile
 from dataclasses import dataclass, field
 from pathlib import Path
 
@@ -46,23 +47,33 @@ TYPING_GROUPS = [
 # ── Profile dataclass ──────────────────────────────────────────────
 @dataclass
 class Profile:
-    name:                str       = ""
-    snd_window_open:     str       = ""
-    snd_window_close:    str       = ""
-    snd_workspace:       str       = ""
-    snd_overview:        str       = ""
-    snd_media_start:     str       = ""
-    typing_apps:         list[str] = field(default_factory=list)
-    typing_volume:       float     = 1.0
-    night_start:         int       = 22
-    night_end:           int       = 7
-    night_volume:        float     = 0.3
-    caps_volume:         float     = 1.0
-    snd_typing_typing:   list[str] = field(default_factory=list)
-    snd_typing_action:   list[str] = field(default_factory=list)
-    snd_typing_modifier: list[str] = field(default_factory=list)
-    snd_typing_function: list[str] = field(default_factory=list)
-    snd_typing_nav:      list[str] = field(default_factory=list)
+    name:                    str       = ""
+    snd_window_open:         str       = ""
+    snd_window_open_vol:     float     = 1.0
+    snd_window_close:        str       = ""
+    snd_window_close_vol:    float     = 1.0
+    snd_workspace:           str       = ""
+    snd_workspace_vol:       float     = 1.0
+    snd_overview:            str       = ""
+    snd_overview_vol:        float     = 1.0
+    snd_media_start:         str       = ""
+    snd_media_start_vol:     float     = 1.0
+    typing_apps:             list[str] = field(default_factory=list)
+    typing_volume:           float     = 1.0
+    night_start:             int       = 22
+    night_end:               int       = 7
+    night_volume:            float     = 0.3
+    caps_volume:             float     = 1.0
+    snd_typing_typing:       list[str] = field(default_factory=list)
+    snd_typing_typing_vol:   float     = 1.0
+    snd_typing_action:       list[str] = field(default_factory=list)
+    snd_typing_action_vol:   float     = 1.0
+    snd_typing_modifier:     list[str] = field(default_factory=list)
+    snd_typing_modifier_vol: float     = 1.0
+    snd_typing_function:     list[str] = field(default_factory=list)
+    snd_typing_function_vol: float     = 1.0
+    snd_typing_nav:          list[str] = field(default_factory=list)
+    snd_typing_nav_vol:      float     = 1.0
 
 
 # ── I/O ────────────────────────────────────────────────────────────
@@ -107,20 +118,35 @@ def load_profile(name: str) -> Profile:
     sd   = SOUNDS_BASE / name
     s    = lambda v, d="": _read_scalar(text, v, sd, d)
     a    = lambda v:        _read_array(text, v, sd)
+    sf   = lambda v, d:     _safe_float(s(v, str(d)), d)
     return Profile(
         name=name,
-        snd_window_open=s("SND_WINDOW_OPEN"),    snd_window_close=s("SND_WINDOW_CLOSE"),
-        snd_workspace=s("SND_WORKSPACE"),          snd_overview=s("SND_OVERVIEW"),
+        snd_window_open=s("SND_WINDOW_OPEN"),
+        snd_window_open_vol=sf("SND_WINDOW_OPEN_VOL", 1.0),
+        snd_window_close=s("SND_WINDOW_CLOSE"),
+        snd_window_close_vol=sf("SND_WINDOW_CLOSE_VOL", 1.0),
+        snd_workspace=s("SND_WORKSPACE"),
+        snd_workspace_vol=sf("SND_WORKSPACE_VOL", 1.0),
+        snd_overview=s("SND_OVERVIEW"),
+        snd_overview_vol=sf("SND_OVERVIEW_VOL", 1.0),
         snd_media_start=s("SND_MEDIA_START"),
+        snd_media_start_vol=sf("SND_MEDIA_START_VOL", 1.0),
         typing_apps=a("TYPING_APPS"),
-        typing_volume=_safe_float(s("TYPING_VOLUME", "1.0"), 1.0),
+        typing_volume=sf("TYPING_VOLUME", 1.0),
         night_start=_safe_int(s("NIGHT_START", "22"), 22),
         night_end=_safe_int(s("NIGHT_END", "7"), 7),
-        night_volume=_safe_float(s("NIGHT_VOLUME", "0.3"), 0.3),
-        caps_volume=_safe_float(s("CAPS_VOLUME", "1.0"), 1.0),
-        snd_typing_typing=a("SND_TYPING_TYPING"),    snd_typing_action=a("SND_TYPING_ACTION"),
-        snd_typing_modifier=a("SND_TYPING_MODIFIER"), snd_typing_function=a("SND_TYPING_FUNCTION"),
+        night_volume=sf("NIGHT_VOLUME", 0.3),
+        caps_volume=sf("CAPS_VOLUME", 1.0),
+        snd_typing_typing=a("SND_TYPING_TYPING"),
+        snd_typing_typing_vol=sf("SND_TYPING_TYPING_VOL", 1.0),
+        snd_typing_action=a("SND_TYPING_ACTION"),
+        snd_typing_action_vol=sf("SND_TYPING_ACTION_VOL", 1.0),
+        snd_typing_modifier=a("SND_TYPING_MODIFIER"),
+        snd_typing_modifier_vol=sf("SND_TYPING_MODIFIER_VOL", 1.0),
+        snd_typing_function=a("SND_TYPING_FUNCTION"),
+        snd_typing_function_vol=sf("SND_TYPING_FUNCTION_VOL", 1.0),
         snd_typing_nav=a("SND_TYPING_NAV"),
+        snd_typing_nav_vol=sf("SND_TYPING_NAV_VOL", 1.0),
     )
 
 def save_profile(p: Profile) -> None:
@@ -131,10 +157,15 @@ def save_profile(p: Profile) -> None:
     (PROFILES_DIR / f"{p.name}.sh").write_text(
         f"SOUNDS_DIR=$NIRI_DIR/sounds/{p.name}\n\n"
         f"SND_WINDOW_OPEN={c(p.snd_window_open)}\n"
+        f"SND_WINDOW_OPEN_VOL={p.snd_window_open_vol}\n"
         f"SND_WINDOW_CLOSE={c(p.snd_window_close)}\n"
+        f"SND_WINDOW_CLOSE_VOL={p.snd_window_close_vol}\n"
         f"SND_WORKSPACE={c(p.snd_workspace)}\n"
+        f"SND_WORKSPACE_VOL={p.snd_workspace_vol}\n"
         f"SND_OVERVIEW={c(p.snd_overview)}\n"
-        f"SND_MEDIA_START={c(p.snd_media_start)}\n\n"
+        f"SND_OVERVIEW_VOL={p.snd_overview_vol}\n"
+        f"SND_MEDIA_START={c(p.snd_media_start)}\n"
+        f"SND_MEDIA_START_VOL={p.snd_media_start_vol}\n\n"
         f"TYPING_APPS={wa(p.typing_apps)}\n\n"
         f"TYPING_VOLUME={p.typing_volume}\n"
         f"NIGHT_START={p.night_start}\n"
@@ -142,10 +173,15 @@ def save_profile(p: Profile) -> None:
         f"NIGHT_VOLUME={p.night_volume}\n"
         f"CAPS_VOLUME={p.caps_volume}\n\n"
         f"SND_TYPING_TYPING={wa(p.snd_typing_typing)}\n"
+        f"SND_TYPING_TYPING_VOL={p.snd_typing_typing_vol}\n"
         f"SND_TYPING_ACTION={wa(p.snd_typing_action)}\n"
+        f"SND_TYPING_ACTION_VOL={p.snd_typing_action_vol}\n"
         f"SND_TYPING_MODIFIER={wa(p.snd_typing_modifier)}\n"
+        f"SND_TYPING_MODIFIER_VOL={p.snd_typing_modifier_vol}\n"
         f"SND_TYPING_FUNCTION={wa(p.snd_typing_function)}\n"
+        f"SND_TYPING_FUNCTION_VOL={p.snd_typing_function_vol}\n"
         f"SND_TYPING_NAV={wa(p.snd_typing_nav)}\n"
+        f"SND_TYPING_NAV_VOL={p.snd_typing_nav_vol}\n"
     )
 
 def list_profiles() -> list[str]:
@@ -188,8 +224,6 @@ def launch_daemon() -> None:
     )
 
 def stop_daemon() -> None:
-    # grep -vx $$ excludes the current bash subprocess's own PID from the kill list,
-    # preventing pgrep -f from matching "sounds-daemon.sh" inside this very command string.
     subprocess.run(
         ["bash", "-c",
          'pgrep -f "sounds-daemon.sh|typing-monitor.py" | grep -vx $$ | xargs -r kill -9 2>/dev/null'],
@@ -199,6 +233,37 @@ def stop_daemon() -> None:
 def restart_daemon() -> None:
     stop_daemon()
     launch_daemon()
+
+
+# ── File picker ────────────────────────────────────────────────────
+def _pick_yazi(app: "SoundsApp", start_dir: Path) -> str | None:
+    with tempfile.NamedTemporaryFile(suffix=".pick", delete=False) as f:
+        tmp = Path(f.name)
+    try:
+        with app.suspend():
+            subprocess.run(
+                ["yazi", str(start_dir), "--chooser-file", str(tmp)],
+                check=False,
+            )
+        return (tmp.read_text().strip() or None) if tmp.exists() else None
+    except Exception:
+        return None
+    finally:
+        tmp.unlink(missing_ok=True)
+
+def _pick_zenity(start_dir: Path) -> str | None:
+    r = subprocess.run(
+        ["zenity", "--file-selection", f"--filename={start_dir}/"],
+        capture_output=True, text=True,
+    )
+    return r.stdout.strip() or None if r.returncode == 0 else None
+
+def _pick_kdialog(start_dir: Path) -> str | None:
+    r = subprocess.run(
+        ["kdialog", "--getopenfilename", str(start_dir)],
+        capture_output=True, text=True,
+    )
+    return r.stdout.strip() or None if r.returncode == 0 else None
 
 
 # ── Name input modal ───────────────────────────────────────────────
@@ -272,15 +337,23 @@ Screen { layout: vertical; }
 #bottom { height: 3; align: right middle; padding: 0 1; }
 
 /* ── Global sounds tab ── */
-.sound-row { height: 3; align: left middle; }
-.sound-cb  { width: 26; }
-.sound-inp { width: 1fr; }
+.sound-row     { height: 3; align: left middle; }
+.sound-cb      { width: 20; }
+.sound-inp     { width: 1fr; }
+.sound-extra   { width: auto; align: left middle; }
+.sound-vol-lbl { width: 4; content-align: right middle; padding: 0 1; }
+.sound-vol     { width: 7; }
+.sound-btn     { min-width: 9; max-width: 9; }
 
 /* ── Typing groups tab ── */
-.group-cb   { width: 1fr; }
-.group-body { padding-left: 4; height: auto; }
-.group-hint { color: $text-muted; height: auto; }
-TextArea    { height: 4; margin-bottom: 1; }
+.group-cb      { width: 1fr; }
+.group-body    { padding-left: 4; height: auto; }
+.group-hint    { color: $text-muted; height: auto; }
+.typing-footer { height: 3; align: left middle; }
+.typing-vol-lbl { width: 4; content-align: right middle; padding: 0 1; }
+.typing-vol    { width: 7; }
+.typing-btn    { min-width: 10; max-width: 10; }
+TextArea       { height: 4; margin-bottom: 1; }
 
 /* ── Volume/Night tab ── */
 .vol-row   { height: 3; align: left middle; }
@@ -289,6 +362,10 @@ TextArea    { height: 4; margin-bottom: 1; }
 
 /* ── Apps tab ── */
 .apps-hint { color: $text-muted; height: auto; margin-bottom: 1; }
+
+/* ── Missing file indicator ── */
+Input.missing   { border: tall $error; }
+TextArea.missing { border: tall $error; }
 
 """
     BINDINGS = [
@@ -308,7 +385,7 @@ TextArea    { height: 4; margin-bottom: 1; }
                 stdout=subprocess.DEVNULL, stderr=subprocess.DEVNULL,
             )
         else:
-            self._notify(message, severity=severity, timeout=2)  # type: ignore[arg-type]
+            self.notify(message, severity=severity, timeout=2)
 
     # ── Layout ─────────────────────────────────────────────────────
     def compose(self) -> ComposeResult:
@@ -338,6 +415,13 @@ TextArea    { height: 4; margin-bottom: 1; }
                                     yield Checkbox(lbl, id=f"cb-{fid}", classes="sound-cb")
                                     yield Input(id=f"f-{fid}", classes="sound-inp",
                                                 placeholder="путь к файлу…")
+                                    with Horizontal(id=f"sound-extra-{fid}",
+                                                    classes="sound-extra"):
+                                        yield Label("vol", classes="sound-vol-lbl")
+                                        yield Input(id=f"vol-{fid}", classes="sound-vol",
+                                                    placeholder="1.0")
+                                        yield Button("Browse", id=f"browse-{fid}",
+                                                     classes="sound-btn")
 
                     # ── Tab 2: Typing Sounds ──────────────────────────
                     with TabPane("Typing Sounds"):
@@ -347,6 +431,12 @@ TextArea    { height: 4; margin-bottom: 1; }
                                 with Vertical(id=f"body-{fid}", classes="group-body"):
                                     yield Static("один путь на строку", classes="group-hint")
                                     yield TextArea(id=f"f-{fid}")
+                                    with Horizontal(classes="typing-footer"):
+                                        yield Label("vol", classes="typing-vol-lbl")
+                                        yield Input(id=f"vol-{fid}", classes="typing-vol",
+                                                    placeholder="1.0")
+                                        yield Button("Add file", id=f"browse-{fid}",
+                                                     classes="typing-btn")
 
                     # ── Tab 3: Volume & Night ─────────────────────────
                     with TabPane("Volume & Night"):
@@ -443,21 +533,29 @@ TextArea    { height: 4; margin-bottom: 1; }
         self.sub_title = name
 
         for fid, _ in GLOBAL_SOUNDS:
-            val = getattr(p, fid)
+            val     = getattr(p, fid)
+            vol     = getattr(p, f"{fid}_vol", 1.0)
             enabled = bool(val)
             try: self.query_one(f"#cb-{fid}", Checkbox).value = enabled
             except Exception: pass
             try: self.query_one(f"#f-{fid}", Input).value = val
             except Exception: pass
-            try: self.query_one(f"#f-{fid}").display = enabled
+            try: self.query_one(f"#f-{fid}", Input).display = enabled
+            except Exception: pass
+            try: self.query_one(f"#vol-{fid}", Input).value = str(vol)
+            except Exception: pass
+            try: self.query_one(f"#sound-extra-{fid}").display = enabled
             except Exception: pass
 
         for fid, _ in TYPING_GROUPS:
             items   = getattr(p, fid)
+            vol     = getattr(p, f"{fid}_vol", 1.0)
             enabled = bool(items)
             try: self.query_one(f"#cb-{fid}", Checkbox).value = enabled
             except Exception: pass
             try: self.query_one(f"#f-{fid}", TextArea).load_text("\n".join(items))
+            except Exception: pass
+            try: self.query_one(f"#vol-{fid}", Input).value = str(vol)
             except Exception: pass
             try: self.query_one(f"#body-{fid}").display = enabled
             except Exception: pass
@@ -476,6 +574,42 @@ TextArea    { height: 4; margin-bottom: 1; }
             self.query_one("#f-typing_apps", TextArea).load_text("\n".join(p.typing_apps))
         except Exception:
             pass
+
+        self._mark_missing(p)
+
+    # ── Missing-file validation ────────────────────────────────────
+    def _missing_files(self, p: Profile) -> list[tuple[str, str]]:
+        """Return (label, path) for every referenced sound file that doesn't exist."""
+        result = []
+        for fid, lbl in GLOBAL_SOUNDS:
+            path = getattr(p, fid, "")
+            if path and not Path(path).exists():
+                result.append((lbl, path))
+        for fid, lbl in TYPING_GROUPS:
+            for path in getattr(p, fid, []):
+                if path and not Path(path).exists():
+                    result.append((lbl, path))
+        return result
+
+    def _mark_missing(self, p: Profile) -> None:
+        """Add/remove .missing CSS class on widgets whose paths don't exist."""
+        for fid, _ in GLOBAL_SOUNDS:
+            path = getattr(p, fid, "")
+            bad  = bool(path) and not Path(path).exists()
+            try:
+                inp = self.query_one(f"#f-{fid}", Input)
+                inp.set_class(bad, "missing")
+            except Exception:
+                pass
+
+        for fid, _ in TYPING_GROUPS:
+            items = getattr(p, fid, [])
+            bad   = any(Path(path).exists() is False for path in items if path)
+            try:
+                ta = self.query_one(f"#f-{fid}", TextArea)
+                ta.set_class(bad, "missing")
+            except Exception:
+                pass
 
     # ── Collect form → Profile ─────────────────────────────────────
     def _collect(self) -> Profile | None:
@@ -501,6 +635,10 @@ TextArea    { height: 4; margin-bottom: 1; }
             try: return float(gi(fid))
             except ValueError: return d
 
+        def flt_vol(fid: str) -> float:
+            try: return float(self.query_one(f"#vol-{fid}", Input).value.strip())
+            except Exception: return 1.0
+
         def intt(fid: str, d: int) -> int:
             try: return int(gi(fid))
             except ValueError: return d
@@ -508,10 +646,15 @@ TextArea    { height: 4; margin-bottom: 1; }
         return Profile(
             name=self._profile.name,
             snd_window_open=  gi("snd_window_open")  if gcb("snd_window_open")  else "",
+            snd_window_open_vol=flt_vol("snd_window_open"),
             snd_window_close= gi("snd_window_close") if gcb("snd_window_close") else "",
+            snd_window_close_vol=flt_vol("snd_window_close"),
             snd_workspace=    gi("snd_workspace")    if gcb("snd_workspace")    else "",
+            snd_workspace_vol=flt_vol("snd_workspace"),
             snd_overview=     gi("snd_overview")     if gcb("snd_overview")     else "",
+            snd_overview_vol=flt_vol("snd_overview"),
             snd_media_start=  gi("snd_media_start")  if gcb("snd_media_start")  else "",
+            snd_media_start_vol=flt_vol("snd_media_start"),
             typing_apps=gta("typing_apps"),
             typing_volume=flt("typing_volume", 1.0),
             night_start=intt("night_start", 22),
@@ -519,10 +662,15 @@ TextArea    { height: 4; margin-bottom: 1; }
             night_volume=flt("night_volume", 0.3),
             caps_volume=flt("caps_volume", 1.0),
             snd_typing_typing=  gta("snd_typing_typing")   if gcb("snd_typing_typing")   else [],
+            snd_typing_typing_vol=flt_vol("snd_typing_typing"),
             snd_typing_action=  gta("snd_typing_action")   if gcb("snd_typing_action")   else [],
+            snd_typing_action_vol=flt_vol("snd_typing_action"),
             snd_typing_modifier=gta("snd_typing_modifier") if gcb("snd_typing_modifier") else [],
+            snd_typing_modifier_vol=flt_vol("snd_typing_modifier"),
             snd_typing_function=gta("snd_typing_function") if gcb("snd_typing_function") else [],
+            snd_typing_function_vol=flt_vol("snd_typing_function"),
             snd_typing_nav=     gta("snd_typing_nav")      if gcb("snd_typing_nav")      else [],
+            snd_typing_nav_vol=flt_vol("snd_typing_nav"),
         )
 
     # ── Checkbox toggles (show/hide dependent fields) ──────────────
@@ -533,10 +681,68 @@ TextArea    { height: 4; margin-bottom: 1; }
             return
         fid = cb_id[3:]
         vis = event.value
+        # global sound: path input + extra container (vol label + vol input + browse)
         try: self.query_one(f"#f-{fid}", Input).display = vis
         except Exception: pass
+        try: self.query_one(f"#sound-extra-{fid}").display = vis
+        except Exception: pass
+        # typing group: body container (hint + textarea + vol + add-file button)
         try: self.query_one(f"#body-{fid}").display = vis
         except Exception: pass
+
+    # ── File browse ────────────────────────────────────────────────
+    @on(Button.Pressed)
+    def _on_browse_button(self, event: Button.Pressed) -> None:
+        bid = event.button.id or ""
+        if not bid.startswith("browse-"):
+            return
+        event.stop()
+        fid    = bid[7:]
+        append = any(fid == g for g, _ in TYPING_GROUPS)
+        self._do_browse(fid, append)
+
+    def _do_browse(self, fid: str, append: bool) -> None:
+        if not self._profile:
+            return
+
+        start_dir = SOUNDS_BASE / self._profile.name
+        if not start_dir.exists():
+            start_dir = SOUNDS_BASE if SOUNDS_BASE.exists() else Path.home()
+
+        if shutil.which("yazi"):
+            path = _pick_yazi(self, start_dir)
+        elif shutil.which("zenity"):
+            path = _pick_zenity(start_dir)
+        elif shutil.which("kdialog"):
+            path = _pick_kdialog(start_dir)
+        else:
+            self._notify("Нет файлового менеджера (yazi / zenity / kdialog)",
+                         severity="warning")
+            return
+
+        if not path:
+            return
+
+        if append:
+            try:
+                ta  = self.query_one(f"#f-{fid}", TextArea)
+                cur = ta.text.strip()
+                ta.load_text((cur + "\n" + path).strip())
+            except Exception:
+                pass
+        else:
+            try:
+                self.query_one(f"#f-{fid}", Input).value = path
+            except Exception:
+                pass
+
+        # Auto-enable the checkbox when a file is picked
+        try:
+            cb = self.query_one(f"#cb-{fid}", Checkbox)
+            if not cb.value:
+                cb.value = True
+        except Exception:
+            pass
 
     # ── Autostart toggle ───────────────────────────────────────────
     @on(Button.Pressed, "#btn-autostart")
@@ -620,6 +826,13 @@ TextArea    { height: 4; margin-bottom: 1; }
         self._reload_list()
         self._notify(f"Удалён профиль '{name}'")
 
+    def _warn_missing(self, p: Profile) -> None:
+        missing = self._missing_files(p)
+        if missing:
+            labels = ", ".join(lbl for lbl, _ in missing)
+            self._notify(f"Файлы не найдены: {labels}", severity="warning")
+            self._mark_missing(p)
+
     # ── Save / Default / Apply ─────────────────────────────────────
     @on(Button.Pressed, "#btn-save")
     def action_save(self) -> None:
@@ -629,6 +842,7 @@ TextArea    { height: 4; margin-bottom: 1; }
         try:
             save_profile(p)
             self._profile = p
+            self._warn_missing(p)
             self._notify(f"Сохранён '{p.name}'")
         except Exception as e:
             self._notify(f"Ошибка сохранения: {e}", severity="error")
@@ -643,6 +857,7 @@ TextArea    { height: 4; margin-bottom: 1; }
             set_default(p.name)
             self._profile = p
             self._reload_list(select=p.name)
+            self._warn_missing(p)
             self._notify(f"'{p.name}' установлен по умолчанию")
         except Exception as e:
             self._notify(f"Ошибка: {e}", severity="error")
@@ -652,6 +867,7 @@ TextArea    { height: 4; margin-bottom: 1; }
         p = self._collect()
         if not p:
             return
+        self._warn_missing(p)
         try:
             save_profile(p)
             set_default(p.name)

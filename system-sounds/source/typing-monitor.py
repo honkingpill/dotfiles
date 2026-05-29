@@ -91,6 +91,16 @@ def parse_args() -> argparse.Namespace:
                    help="Sounds for Esc, F1–F12")
     p.add_argument("--nav",      nargs="+", default=[], metavar="FILE",
                    help="Sounds for arrow keys, Home/End/PgUp/PgDn")
+    p.add_argument("--typing-vol",   type=float, default=1.0, metavar="F",
+                   help="Volume multiplier for typing group (default 1.0)")
+    p.add_argument("--action-vol",   type=float, default=1.0, metavar="F",
+                   help="Volume multiplier for action group (default 1.0)")
+    p.add_argument("--modifier-vol", type=float, default=1.0, metavar="F",
+                   help="Volume multiplier for modifier group (default 1.0)")
+    p.add_argument("--function-vol", type=float, default=1.0, metavar="F",
+                   help="Volume multiplier for function group (default 1.0)")
+    p.add_argument("--nav-vol",      type=float, default=1.0, metavar="F",
+                   help="Volume multiplier for nav group (default 1.0)")
     return p.parse_args()
 
 
@@ -164,6 +174,7 @@ def read_device(
     path: str,
     args: argparse.Namespace,
     sounds_by_group: dict[str, list[str]],
+    vol_by_group: dict[str, float],
     focused_path: Path,
     allowed_apps: set[str],
     last_sound: dict[str, str | None],
@@ -213,7 +224,7 @@ def read_device(
                     sound = pick(sounds, last_sound[group])
                     last_sound[group] = sound
 
-                play(sound, compute_volume(args.volume, args, caps_on))
+                play(sound, compute_volume(args.volume * vol_by_group.get(group, 1.0), args, caps_on))
 
     except PermissionError:
         print(f"Permission denied: {path} (add user to 'input' group)", file=sys.stderr)
@@ -236,6 +247,20 @@ def main() -> None:
         "nav":      args.nav,
     }
 
+    for group, files in sounds_by_group.items():
+        missing = [f for f in files if not Path(f).exists()]
+        for f in missing:
+            print(f"WARNING: sound file not found, skipping: {f}", file=sys.stderr)
+        sounds_by_group[group] = [f for f in files if Path(f).exists()]
+
+    vol_by_group: dict[str, float] = {
+        "typing":   args.typing_vol,
+        "action":   args.action_vol,
+        "modifier": args.modifier_vol,
+        "function": args.function_vol,
+        "nav":      args.nav_vol,
+    }
+
     keyboards = find_keyboards()
     if not keyboards:
         print("No keyboard devices found — typing sounds disabled", file=sys.stderr)
@@ -255,7 +280,7 @@ def main() -> None:
     threads = [
         threading.Thread(
             target=read_device,
-            args=(kb, args, sounds_by_group, focused_path, allowed_apps, last_sound),
+            args=(kb, args, sounds_by_group, vol_by_group, focused_path, allowed_apps, last_sound),
             daemon=True,
         )
         for kb in keyboards

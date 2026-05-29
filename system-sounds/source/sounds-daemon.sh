@@ -9,6 +9,15 @@ source "$NIRI_DIR/profiles/$PROFILE.sh"
 
 FOCUSED_APP_FILE=/tmp/niri-focused-app
 
+# Play a sound file with a 0.0–1.0 volume (converts to paplay's 0–65536 scale).
+_play() {
+    local file="$1" vol="${2:-1.0}"
+    [[ -z "$file" ]] && return
+    local pa_vol
+    pa_vol=$(awk "BEGIN{printf \"%d\", $vol * 65536}")
+    paplay --volume="$pa_vol" "$file"
+}
+
 # ── Media monitor ─────────────────────────────────────────────────
 media_monitor() {
     local prev="" in_seq=false last_stop=0
@@ -26,7 +35,7 @@ media_monitor() {
                     if (( now - last_stop >= 30 )) && [[ -n "${SND_MEDIA_START:-}" ]]; then
                         in_seq=true
                         playerctl --ignore-player=discord pause 2>/dev/null
-                        paplay "$SND_MEDIA_START"
+                        _play "$SND_MEDIA_START" "${SND_MEDIA_START_VOL:-1.0}"
                         playerctl --ignore-player=discord play 2>/dev/null
                     fi
                 fi
@@ -74,7 +83,7 @@ niri_monitor() {
                         win_apps[$id]=$app
                     else
                         win_apps[$id]=$app
-                        [[ -n "${SND_WINDOW_OPEN:-}" ]] && paplay "$SND_WINDOW_OPEN" &
+                        [[ -n "${SND_WINDOW_OPEN:-}" ]] && _play "$SND_WINDOW_OPEN" "${SND_WINDOW_OPEN_VOL:-1.0}" &
                     fi
                 fi
 
@@ -84,7 +93,7 @@ niri_monitor() {
                 [[ "$line" =~ Window\ closed:\ ([0-9]+) ]] && id="${BASH_REMATCH[1]}"
                 if [[ -n "$id" ]]; then
                     unset "win_apps[$id]"
-                    [[ -n "${SND_WINDOW_CLOSE:-}" ]] && paplay "$SND_WINDOW_CLOSE" &
+                    [[ -n "${SND_WINDOW_CLOSE:-}" ]] && _play "$SND_WINDOW_CLOSE" "${SND_WINDOW_CLOSE_VOL:-1.0}" &
                 fi
 
             # ── Focus changed — update the file typing-monitor reads ──
@@ -99,11 +108,11 @@ niri_monitor() {
 
             # ── Workspace switch ──────────────────────────────────────
             elif [[ "$line" == "Workspace focused:"* ]]; then
-                [[ -n "${SND_WORKSPACE:-}" ]] && paplay "$SND_WORKSPACE" &
+                [[ -n "${SND_WORKSPACE:-}" ]] && _play "$SND_WORKSPACE" "${SND_WORKSPACE_VOL:-1.0}" &
 
             # ── Overview ──────────────────────────────────────────────
             elif [[ "$line" == "Overview toggled: true" ]]; then
-                [[ -n "${SND_OVERVIEW:-}" ]] && paplay "$SND_OVERVIEW" &
+                [[ -n "${SND_OVERVIEW:-}" ]] && _play "$SND_OVERVIEW" "${SND_OVERVIEW_VOL:-1.0}" &
             fi
 
         done < <(niri msg event-stream 2>/dev/null)
@@ -137,6 +146,13 @@ _tm_args=(
 [[ ${#SND_TYPING_MODIFIER[@]} -gt 0 ]] && _tm_args+=(--modifier "${SND_TYPING_MODIFIER[@]}")
 [[ ${#SND_TYPING_FUNCTION[@]} -gt 0 ]] && _tm_args+=(--function "${SND_TYPING_FUNCTION[@]}")
 [[ ${#SND_TYPING_NAV[@]}      -gt 0 ]] && _tm_args+=(--nav      "${SND_TYPING_NAV[@]}")
+_tm_args+=(
+    --typing-vol   "${SND_TYPING_TYPING_VOL:-1.0}"
+    --action-vol   "${SND_TYPING_ACTION_VOL:-1.0}"
+    --modifier-vol "${SND_TYPING_MODIFIER_VOL:-1.0}"
+    --function-vol "${SND_TYPING_FUNCTION_VOL:-1.0}"
+    --nav-vol      "${SND_TYPING_NAV_VOL:-1.0}"
+)
 
 # Supervisor: restart typing-monitor if it exits for any reason
 typing_supervisor() {

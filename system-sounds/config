@@ -1,6 +1,6 @@
 #!/usr/bin/env bash
 # Niri Sounds — TUI launcher
-DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
+DIR="$(cd "$(dirname "$(readlink -f "${BASH_SOURCE[0]}")")" && pwd)"
 
 # ── Collect missing deps ───────────────────────────────────────────
 _missing=()
