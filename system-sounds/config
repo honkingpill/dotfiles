@@ -1,0 +1,38 @@
+#!/usr/bin/env bash
+# Niri Sounds — TUI launcher
+DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
+
+# ── Collect missing deps ───────────────────────────────────────────
+_missing=()
+! command -v python3 &>/dev/null                                              && _missing+=(python3)
+command -v python3 &>/dev/null && ! python3 -c "import textual" 2>/dev/null  && _missing+=(textual)
+
+if [[ ${#_missing[@]} -gt 0 ]]; then
+    if [[ $EUID -ne 0 ]]; then
+        echo ""
+        echo "Missing dependencies: ${_missing[*]}"
+        echo "Re-run with sudo to install:  sudo \"$0\""
+        exit 1
+    fi
+
+    # ── Running as root — install ──────────────────────────────────
+    echo "Installing missing dependencies: ${_missing[*]}"
+    if command -v pacman &>/dev/null; then
+        _pkgs=()
+        for d in "${_missing[@]}"; do
+            [[ $d == python3 ]] && _pkgs+=(python)
+            [[ $d == textual ]] && _pkgs+=(python-textual)
+        done
+        pacman -S --noconfirm "${_pkgs[@]}"
+    elif command -v apt &>/dev/null; then
+        for d in "${_missing[@]}"; do
+            [[ $d == python3 ]] && apt install -y python3
+            [[ $d == textual ]] && python3 -m pip install textual
+        done
+    else
+        echo "Unknown package manager. Install manually: python3 and 'pip install textual'"
+        exit 1
+    fi
+fi
+
+exec python3 "$DIR/source/sounds-tui.py" "$@"

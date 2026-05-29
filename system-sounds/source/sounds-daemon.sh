@@ -1,35 +1,13 @@
 #!/usr/bin/env bash
 # Niri sounds daemon
-# Plays sounds for window, workspace, typing, and media events.
-# Change SND_* paths to your own samples at any time.
+# Change PROFILE to switch sound sets. Profiles live in profiles/<name>.sh
 
-SOUNDS_DIR=/home/art/.config/niri/sounds
+NIRI_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")/.." && pwd)"
+PROFILE=steam
 
-SND_WINDOW_OPEN=$SOUNDS_DIR/service-login.oga
-SND_WINDOW_CLOSE=$SOUNDS_DIR/service-logout.oga
-SND_WORKSPACE=$SOUNDS_DIR/deck_ui_tab_transition_01.wav
-SND_OVERVIEW=$SOUNDS_DIR/message-new-instant.oga
-SND_MEDIA_START=$SOUNDS_DIR/deck_ui_launch_game.wav
-
-# App IDs that trigger typing sounds. Empty = all apps.
-TYPING_APPS=(kitty org.gnome.Nautilus)
+source "$NIRI_DIR/profiles/$PROFILE.sh"
 
 FOCUSED_APP_FILE=/tmp/niri-focused-app
-
-# ── Typing sound settings ─────────────────────────────────────────
-TYPING_VOLUME=1.0    # base volume 0.0–1.0
-NIGHT_START=22       # night mode start (hour, 24h)
-NIGHT_END=7          # night mode end (hour, 24h)
-NIGHT_VOLUME=0.3     # volume fraction during night (0.3 = 30%)
-CAPS_VOLUME=1.0      # extra multiplier when Caps Lock is on (1.0 = no change)
-
-# Per-group sound files. List multiple files for random selection (no consecutive repeat).
-# Empty array = silent for that group.
-SND_TYPING_TYPING=( "$SOUNDS_DIR/deck_ui_typing.wav" )   # a–z, 0–9, punctuation
-SND_TYPING_ACTION=( "$SOUNDS_DIR/deck_ui_typing.wav" )   # Enter, Backspace, Space, Tab
-SND_TYPING_MODIFIER=()                 # Shift, Ctrl, Alt, Super, CapsLock — silent
-SND_TYPING_FUNCTION=()                 # F1–F12, Escape — silent
-SND_TYPING_NAV=()                      # Arrow keys, Home/End/PgUp/PgDn — silent
 
 # ── Media monitor ─────────────────────────────────────────────────
 media_monitor() {
@@ -45,7 +23,7 @@ media_monitor() {
             Playing)
                 if [[ "$prev" != Playing ]]; then
                     local now; now=$(date +%s)
-                    if (( now - last_stop >= 30 )); then
+                    if (( now - last_stop >= 30 )) && [[ -n "${SND_MEDIA_START:-}" ]]; then
                         in_seq=true
                         playerctl --ignore-player=discord pause 2>/dev/null
                         paplay "$SND_MEDIA_START"
@@ -96,7 +74,7 @@ niri_monitor() {
                         win_apps[$id]=$app
                     else
                         win_apps[$id]=$app
-                        paplay "$SND_WINDOW_OPEN" &
+                        [[ -n "${SND_WINDOW_OPEN:-}" ]] && paplay "$SND_WINDOW_OPEN" &
                     fi
                 fi
 
@@ -106,7 +84,7 @@ niri_monitor() {
                 [[ "$line" =~ Window\ closed:\ ([0-9]+) ]] && id="${BASH_REMATCH[1]}"
                 if [[ -n "$id" ]]; then
                     unset "win_apps[$id]"
-                    paplay "$SND_WINDOW_CLOSE" &
+                    [[ -n "${SND_WINDOW_CLOSE:-}" ]] && paplay "$SND_WINDOW_CLOSE" &
                 fi
 
             # ── Focus changed — update the file typing-monitor reads ──
@@ -121,11 +99,11 @@ niri_monitor() {
 
             # ── Workspace switch ──────────────────────────────────────
             elif [[ "$line" == "Workspace focused:"* ]]; then
-                paplay "$SND_WORKSPACE" &
+                [[ -n "${SND_WORKSPACE:-}" ]] && paplay "$SND_WORKSPACE" &
 
             # ── Overview ──────────────────────────────────────────────
             elif [[ "$line" == "Overview toggled: true" ]]; then
-                paplay "$SND_OVERVIEW" &
+                [[ -n "${SND_OVERVIEW:-}" ]] && paplay "$SND_OVERVIEW" &
             fi
 
         done < <(niri msg event-stream 2>/dev/null)
@@ -163,7 +141,7 @@ _tm_args=(
 # Supervisor: restart typing-monitor if it exits for any reason
 typing_supervisor() {
     while true; do
-        python3 /home/art/.config/niri/typing-monitor.py "$FOCUSED_APP_FILE" "${_tm_args[@]}"
+        python3 "$NIRI_DIR/source/typing-monitor.py" "$FOCUSED_APP_FILE" "${_tm_args[@]}"
         sleep 2
     done
 }
