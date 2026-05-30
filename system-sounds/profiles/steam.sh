@@ -11,12 +11,12 @@ SND_OVERVIEW_VOL=1.0
 SND_MEDIA_START=$SOUNDS_DIR/steam_deck_ui_launch_game.wav
 SND_MEDIA_START_VOL=1.0
 
-TYPING_APPS=( "kitty" "org.gnome.Nautilus" )
+TYPING_APPS=( "kitty" "org.gnome.Nautilus" "dev.zed.Zed" "org.telegram.desktop" )
 
 TYPING_VOLUME=1.0
-NIGHT_START=24
+NIGHT_START=20
 NIGHT_END=7
-NIGHT_VOLUME=1.0
+NIGHT_VOLUME=0.6
 CAPS_VOLUME=3.0
 
 SND_TYPING_TYPING=( "$SOUNDS_DIR/steam_deck_ui_typing.wav" )

@@ -9,10 +9,24 @@ source "$NIRI_DIR/profiles/$PROFILE.sh"
 
 FOCUSED_APP_FILE=/tmp/niri-focused-app
 
+# Returns 0 (true) if current hour is within the night window.
+_is_night() {
+    local hour; hour=$(date +%-H)
+    if (( NIGHT_START > NIGHT_END )); then
+        (( hour >= NIGHT_START || hour < NIGHT_END ))
+    else
+        (( hour >= NIGHT_START && hour < NIGHT_END ))
+    fi
+}
+
 # Play a sound file with a 0.0–1.0 volume (converts to paplay's 0–65536 scale).
+# Applies NIGHT_VOLUME multiplier automatically when in night window.
 _play() {
     local file="$1" vol="${2:-1.0}"
     [[ -z "$file" ]] && return
+    if _is_night; then
+        vol=$(awk "BEGIN{printf \"%.6f\", $vol * ${NIGHT_VOLUME:-1.0}}")
+    fi
     local pa_vol
     pa_vol=$(awk "BEGIN{printf \"%d\", $vol * 65536}")
     paplay --volume="$pa_vol" "$file"
