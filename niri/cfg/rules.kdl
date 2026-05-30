@@ -26,3 +26,10 @@
         open-floating true
         open-focused false
     }
+    window-rule {
+        match app-id=r#"^org\.telegram\.desktop$"#
+        exclude app-id=r#"^org\.telegram\.desktop$"# title="Media viewer"
+        default-column-width { fixed 380; }
+        default-window-height { fixed 772; }
+        block-out-from "screencast"
+    }
