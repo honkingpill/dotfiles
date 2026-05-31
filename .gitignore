@@ -30,6 +30,6 @@ cachyos-hello.json
 mimeapps.list
 user-dirs.dirs
 user-dirs.locale
-.gitignore
-CLAUDE.md
-system-sounds/sounds/steam
+#.gitignore
+#CLAUDE.md
+#system-sounds/sounds/steam
