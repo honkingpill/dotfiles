@@ -1,0 +1,55 @@
+[manager]
+ratio          = [1, 4, 3]
+sort_by        = "natural"
+sort_sensitive = false
+sort_reverse   = false
+sort_dir_first = true
+linemode       = "size"
+show_hidden    = false
+show_symlink   = true
+scrolloff      = 5
+
+[preview]
+tab_size      = 2
+max_width     = 1200
+max_height    = 1800
+image_quality = 80
+
+[opener]
+edit = [
+  { run = 'vim "$@"',   desc = "vim",   block = true },
+  { run = 'micro "$@"', desc = "micro", block = true },
+  { run = 'nano "$@"',  desc = "nano",  block = true },
+]
+open = [
+  { run = 'xdg-open "$@"', desc = "xdg-open" },
+]
+media = [
+  { run = 'ffplay "$1"', desc = "ffplay", orphan = true },
+]
+
+[open]
+rules = [
+  { mime = "text/*",           use = ["edit", "open"] },
+  { mime = "application/json", use = ["edit", "open"] },
+  { mime = "application/xml",  use = ["edit"] },
+  { mime = "image/*",          use = ["open"] },
+  { mime = "video/*",          use = ["media", "open"] },
+  { mime = "audio/*",          use = ["media", "open"] },
+  { mime = "application/pdf",  use = ["open"] },
+  { mime = "*",                use = ["open", "edit"] },
+]
+
+[tasks]
+file_workers    = 5
+plugin_workers  = 5
+fetch_workers   = 5
+preload_workers = 3
+process_workers = 3
+bizarre_retry   = 5
+image_alloc     = 536870912
+image_bound     = [0, 0]
+suppress_preload = false
+
+[log]
+enabled = false
