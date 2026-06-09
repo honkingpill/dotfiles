@@ -115,7 +115,9 @@ binds {
     Mod+Equal                           { set-column-width "+10%"; }
     Mod+Alt+WheelScrollUp               { set-column-width "+10%"; }
     Mod+Shift+Minus                     { set-window-height "-10%"; }
+    Mod+Alt+Shift+WheelScrollDown       { set-window-height "-10%"; }
     Mod+Shift+Equal                     { set-window-height "+10%"; }
+    Mod+Alt+Shift+WheelScrollUp         { set-window-height "+10%"; }
 
     // ─── Modes ───
     Mod+T                               { toggle-window-floating; }
