@@ -21,5 +21,11 @@
     }
 
     hotkey-overlay {
-       skip-at-startup
+        skip-at-startup
+    }
+    overview {
+        zoom 0.3
+        workspace-shadow {
+        off
+        }
     }

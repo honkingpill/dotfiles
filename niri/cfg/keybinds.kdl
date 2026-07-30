@@ -41,14 +41,14 @@ binds {
     Mod+Down                            { focus-window-down; }
     Mod+H                               { focus-window-down; }
 
-    Mod+CTRL+Left                       { move-column-left; }
-    Mod+CTRL+J                          { move-column-left; }
-    Mod+CTRL+Right                      { move-column-right; }
-    Mod+CTRL+K                          { move-column-right; }
-    Mod+CTRL+UP                         { move-window-up; }
-    Mod+CTRL+H                          { move-window-up; }
-    Mod+CTRL+Down                       { move-window-down; }
-    Mod+CTRL+L                          { move-window-down; }
+    Mod+CTRL+Left                       { spawn-sh "~/.config/niri/cfg/scripts/snap.sh left 16"; }
+    Mod+CTRL+J                          { spawn-sh "~/.config/niri/cfg/scripts/snap.sh left 16"; }
+    Mod+CTRL+Right                      { spawn-sh "~/.config/niri/cfg/scripts/snap.sh right 16"; }
+    Mod+CTRL+K                          { spawn-sh "~/.config/niri/cfg/scripts/snap.sh right 16"; }
+    Mod+CTRL+UP                         { spawn-sh "~/.config/niri/cfg/scripts/snap.sh up 16"; }
+    Mod+CTRL+H                          { spawn-sh "~/.config/niri/cfg/scripts/snap.sh up 16"; }
+    Mod+CTRL+Down                       { spawn-sh "~/.config/niri/cfg/scripts/snap.sh down 16"; }
+    Mod+CTRL+L                          { spawn-sh "~/.config/niri/cfg/scripts/snap.sh down 16"; }
 
     Mod+Home                            { focus-column-first; }
     Mod+End                              { focus-column-last; }
@@ -59,14 +59,12 @@ binds {
     Mod+Shift+Right                     { focus-monitor-right; }
 
     Mod+ALT+Left                        { consume-or-expel-window-left; }
+    Mod+ALT+J                           { consume-or-expel-window-left; }
     Mod+ALT+Right                       { consume-or-expel-window-right; }
-    Mod+Shift+UP                        { focus-monitor-up; }
-    Mod+Shift+Down                      { focus-monitor-down; }
+    Mod+ALT+K                           { consume-or-expel-window-right; }
 
     Mod+Shift+CTRL+Left                 { move-column-to-monitor-left; }
     Mod+Shift+CTRL+Right                { move-column-to-monitor-right; }
-    Mod+Shift+CTRL+UP                   { move-column-to-monitor-up; }
-    Mod+Shift+CTRL+Down                 { move-column-to-monitor-down; }
 
     // ─── Workspace Switching ───
     Mod+WheelScrollDown                 cooldown-ms=150 { focus-workspace-down; }
@@ -104,7 +102,9 @@ binds {
     Mod+CTRL+8                          { move-column-to-workspace 8; }
     Mod+CTRL+9                          { move-column-to-workspace 9; }
 
-    Mod+TAB                             { focus-workspace-previous; }
+    // --- Tabs Controls ---
+    Mod+Shift+Page_Up                   { move-workspace-up; }
+    Mod+Shift+Page_Down                 { move-workspace-down; }
 
     // ─── Layout Controls ───
     Mod+CTRL+F                          { expand-column-to-available-width; }
@@ -122,6 +122,9 @@ binds {
     // ─── Modes ───
     Mod+T                               { toggle-window-floating; }
     Mod+F                               { fullscreen-window; }
+    Mod+G                               { toggle-column-tabbed-display; }
+    Mod+W                               repeat=false { toggle-overview; }
+    Mod+Slash                           { switch-focus-between-floating-and-tiling; }
 
     // ─── Screenshots ───
     CTRL+Shift+1                        { screenshot; }
@@ -136,5 +139,5 @@ binds {
     // ─── Exit / Power ───
     CTRL+ALT+Delete                     { quit; } // Also quits Niri
     Mod+Shift+P                         { power-off-monitors; } // Turn off screens (useful for OLED or privacy)
-    Mod+W                               repeat=false { toggle-overview; }
+
 }

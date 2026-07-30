@@ -1,8 +1,15 @@
+   workspace "c"{}
+   workspace "b"{}
+   workspace "a"{}
     window-rule {
         geometry-corner-radius 20 // Set every window radius to 20
         clip-to-geometry true
     }
-
+    window-rule {
+    match title="Firefox"
+    open-on-workspace "c"
+    open-maximized true
+    }
      // if you use steam you will probably like these
     window-rule {
         match app-id="steam"
@@ -33,4 +40,9 @@
         default-column-width { fixed 380; }
         default-window-height { fixed 772; }
         block-out-from "screencast"
+        open-on-workspace "b"
+    }
+    window-rule {
+        match app-id=r#"v2rayN"#
+        open-on-workspace "a"
     }
