@@ -6,7 +6,7 @@
         clip-to-geometry true
     }
     window-rule {
-    match title="Firefox"
+    match app-id="^zen$"
     open-on-workspace "c"
     open-maximized true
     }

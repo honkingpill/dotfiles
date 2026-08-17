@@ -11,7 +11,7 @@ binds {
     // ─── Applications ───
     Mod+Return                          repeat=false hotkey-overlay-title="Open Terminal: kitty" { spawn "kitty"; }
     Mod+D                               hotkey-overlay-title="Open App Launcher: noctalia launcher" { spawn-sh "qs -c noctalia-shell ipc call launcher toggle"; }
-    Mod+B                               hotkey-overlay-title="Open Browser: firefox" { spawn "firefox"; }
+    Mod+B                               hotkey-overlay-title="Open Browser: Zen" { spawn "gtk-launch" "zen-browser"; }
     Mod+Shift+D                         repeat=false hotkey-overlay-title="Open Discord (SOCKS5 proxy)" { spawn "discord" "--proxy-server=socks5://127.0.0.1:10808"; }
     Mod+ALT+L                           hotkey-overlay-title="Lock Screen: noctalia lock" { spawn-sh "qs -c noctalia-shell ipc call lockScreen lock"; }
     Mod+Shift+Q                         hotkey-overlay-title="Session Menu: noctalia sessionMenu" { spawn-sh "qs -c noctalia-shell ipc call sessionMenu toggle"; }
@@ -41,14 +41,39 @@ binds {
     Mod+Down                            { focus-window-down; }
     Mod+H                               { focus-window-down; }
 
+    // ─── Снапинг floating-окон: сетка 3x3, только стрелки/hjkl ───
+    // KP-клавиши не используем: niri резолвит их в keycode на этапе
+    // загрузки конфига и игнорирует последующие переключения numlock,
+    // из-за чего биндинги на KP_1..KP_9 не срабатывают (niri-wm/niri#2134).
+    // Shift/Alt+Left/Right заняты под move-column-to-monitor и
+    // consume-or-expel, поэтому диагонали висят на Up/Down(+L/H),
+    // где доп.модификаторы были свободны: Shift = "уклон влево",
+    // Alt = "уклон вправо".
+    //
+    //        Shift+Up/L   Up/L   Alt+Up/L
+    //           Left/J    center   Right/K
+    //        Shift+Down/H Down/H Alt+Down/H
+
     Mod+CTRL+Left                       { spawn-sh "~/.config/niri/cfg/scripts/snap.sh left 16"; }
     Mod+CTRL+J                          { spawn-sh "~/.config/niri/cfg/scripts/snap.sh left 16"; }
     Mod+CTRL+Right                      { spawn-sh "~/.config/niri/cfg/scripts/snap.sh right 16"; }
     Mod+CTRL+K                          { spawn-sh "~/.config/niri/cfg/scripts/snap.sh right 16"; }
-    Mod+CTRL+UP                         { spawn-sh "~/.config/niri/cfg/scripts/snap.sh up 16"; }
-    Mod+CTRL+H                          { spawn-sh "~/.config/niri/cfg/scripts/snap.sh up 16"; }
+    Mod+CTRL+Up                         { spawn-sh "~/.config/niri/cfg/scripts/snap.sh up 16"; }
+    Mod+CTRL+L                          { spawn-sh "~/.config/niri/cfg/scripts/snap.sh up 16"; }
     Mod+CTRL+Down                       { spawn-sh "~/.config/niri/cfg/scripts/snap.sh down 16"; }
-    Mod+CTRL+L                          { spawn-sh "~/.config/niri/cfg/scripts/snap.sh down 16"; }
+    Mod+CTRL+H                          { spawn-sh "~/.config/niri/cfg/scripts/snap.sh down 16"; }
+
+    Mod+CTRL+Shift+Up                   { spawn-sh "~/.config/niri/cfg/scripts/snap.sh nw 16"; }
+    Mod+CTRL+Shift+L                    { spawn-sh "~/.config/niri/cfg/scripts/snap.sh nw 16"; }
+    Mod+CTRL+Alt+Up                     { spawn-sh "~/.config/niri/cfg/scripts/snap.sh ne 16"; }
+    Mod+CTRL+Alt+L                      { spawn-sh "~/.config/niri/cfg/scripts/snap.sh ne 16"; }
+    Mod+CTRL+Shift+Down                 { spawn-sh "~/.config/niri/cfg/scripts/snap.sh sw 16"; }
+    Mod+CTRL+Shift+H                    { spawn-sh "~/.config/niri/cfg/scripts/snap.sh sw 16"; }
+    Mod+CTRL+Alt+Down                   { spawn-sh "~/.config/niri/cfg/scripts/snap.sh se 16"; }
+    Mod+CTRL+Alt+H                      { spawn-sh "~/.config/niri/cfg/scripts/snap.sh se 16"; }
+
+    Mod+CTRL+Shift+Alt+Up               { spawn-sh "~/.config/niri/cfg/scripts/snap.sh center 16"; }
+    Mod+CTRL+Shift+Alt+L                { spawn-sh "~/.config/niri/cfg/scripts/snap.sh center 16"; }
 
     Mod+Home                            { focus-column-first; }
     Mod+End                              { focus-column-last; }
@@ -124,7 +149,12 @@ binds {
     Mod+F                               { fullscreen-window; }
     Mod+G                               { toggle-column-tabbed-display; }
     Mod+W                               repeat=false { toggle-overview; }
+    // Mod+Slash не работает на RU-раскладке: физически та же клавиша
+    // шлёт keysym "period", а не "slash" (проверено xkbcli compile-keymap
+    // --layout us,ru). Дублируем бинд, чтобы клавиша работала по факту
+    // физического положения, а не активной раскладки.
     Mod+Slash                           { switch-focus-between-floating-and-tiling; }
+    Mod+Period                          { switch-focus-between-floating-and-tiling; }
 
     // ─── Screenshots ───
     CTRL+Shift+1                        { screenshot; }

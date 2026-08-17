@@ -1,4 +1,4 @@
-[manager]
+[mgr]
 ratio          = [1, 4, 3]
 sort_by        = "natural"
 sort_sensitive = false
@@ -27,17 +27,43 @@ open = [
 media = [
   { run = 'ffplay "$1"', desc = "ffplay", orphan = true },
 ]
+image = [
+  # gimp не установлен на момент правки — команда прописана заранее,
+  # заработает как только появится пакет.
+  { run = 'gimp "$@"', desc = "GIMP", orphan = true },
+]
+video = [
+  { run = 'vlc "$@"', desc = "VLC", orphan = true },
+]
+office = [
+  { run = 'libreoffice "$@"', desc = "LibreOffice", orphan = true },
+]
 
 [open]
 rules = [
   { mime = "text/*",           use = ["edit", "open"] },
   { mime = "application/json", use = ["edit", "open"] },
   { mime = "application/xml",  use = ["edit"] },
-  { mime = "image/*",          use = ["open"] },
-  { mime = "video/*",          use = ["media", "open"] },
+  { mime = "image/*",          use = ["open", "image"] },
+  { mime = "video/*",          use = ["video", "media", "open"] },
   { mime = "audio/*",          use = ["media", "open"] },
-  { mime = "application/pdf",  use = ["open"] },
+  { mime = "application/pdf",  use = ["office", "open"] },
+
+  # Офисные форматы: docx/xlsx/pptx (OOXML), doc/xls/ppt (legacy MS),
+  # odt/ods/odp (OpenDocument), rtf — всё через LibreOffice первым делом.
+  { mime = "application/vnd.openxmlformats-officedocument.*", use = ["office", "open"] },
+  { mime = "application/vnd.oasis.opendocument.*",            use = ["office", "open"] },
+  { mime = "application/vnd.ms-*",                             use = ["office", "open"] },
+  { mime = "application/msword",                               use = ["office", "open"] },
+  { mime = "application/rtf",                                  use = ["office", "open"] },
+
   { mime = "*",                use = ["open", "edit"] },
+]
+
+[plugin]
+prepend_fetchers = [
+  { url = "*",  run = "git", group = "git" },
+  { url = "*/", run = "git", group = "git" },
 ]
 
 [tasks]

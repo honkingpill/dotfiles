@@ -1,103 +1,194 @@
-# ── Visibility ────────────────────────────────────────────────────────────────
+# ── Plugins ──────────────────────────────────────────────────────────────────
+# `l` (enter) и `p` (paste) переопределяют дефолт осознанно — так и задумано
+# авторами плагинов. Остальные бинды проверены на конфликт с дефолтным
+# keymap-default.toml (yazi 26.5.6):
+#   f = filter --smart, z = plugin fzf, d = remove, y = yank, - = link,
+#   c/g/m/t = префиксы (cc/cC/cd/cD/cf/cn, gg/gh/gc/gd/gt/g<Space>/gf, m*, tt/tr)
+# — ни один новый бинд ниже их не задевает.
 
-[[manager.prepend_keymap]]
-on   = "."
-run  = "hidden toggle"
-desc = "Toggle hidden files"
+[[mgr.prepend_keymap]]
+on   = "l"
+run  = "plugin smart-enter"
+desc = "Enter the child directory, or open the file"
 
-# ── Quick directory navigation ─────────────────────────────────────────────────
+[[mgr.prepend_keymap]]
+on   = "p"
+run  = "plugin smart-paste"
+desc = "Paste into the hovered directory, or CWD"
 
-[[manager.prepend_keymap]]
-on   = ["g", "d"]
-run  = "cd ~/Downloads"
-desc = "→ ~/Downloads"
+[[mgr.prepend_keymap]]
+on   = "<A-p>"
+run  = "paste"
+desc = "Paste into CWD, ignoring what's hovered"
 
-[[manager.prepend_keymap]]
-on   = ["g", "D"]
-run  = "cd ~/Documents"
-desc = "→ ~/Documents"
+[[mgr.prepend_keymap]]
+on   = "F"
+run  = "plugin smart-filter"
+desc = "Smart filter (continuous, auto-enter, open on submit)"
 
-[[manager.prepend_keymap]]
-on   = ["g", "p"]
-run  = "cd ~/Pictures"
-desc = "→ ~/Pictures"
+[[mgr.prepend_keymap]]
+on   = ["c", "m"]
+run  = "plugin chmod"
+desc = "Chmod on selected files"
 
-[[manager.prepend_keymap]]
-on   = ["g", "V"]
-run  = "cd ~/Videos"
-desc = "→ ~/Videos"
+[[mgr.prepend_keymap]]
+on   = ["c", "x"]
+run  = "plugin diff"
+desc = "Diff the selected with the hovered file"
 
-[[manager.prepend_keymap]]
-on   = ["g", "M"]
-run  = "cd ~/Music"
-desc = "→ ~/Music"
+[[mgr.prepend_keymap]]
+on   = ["g", "s"]
+run  = "plugin vcs-files"
+desc = "Show Git file changes"
 
-[[manager.prepend_keymap]]
-on   = ["g", "C"]
-run  = "cd ~/.config"
-desc = "→ ~/.config"
+[[mgr.prepend_keymap]]
+on   = "M"
+run  = "plugin mount"
+desc = "Mount manager (mount/unmount/eject)"
 
-[[manager.prepend_keymap]]
-on   = ["g", "T"]
-run  = "cd ~/.local/share/Trash/files"
-desc = "→ Trash"
+[[mgr.prepend_keymap]]
+on   = "+"
+run  = "plugin zoom 1"
+desc = "Zoom in hovered file"
 
-# ── Copy path to clipboard (wl-clipboard) ─────────────────────────────────────
+[[mgr.prepend_keymap]]
+on   = "="
+run  = "plugin zoom -1"
+desc = "Zoom out hovered file"
 
-[[manager.prepend_keymap]]
-on   = ["y", "p"]
-run  = "shell 'wl-copy \"$1\"'"
-desc = "Copy absolute path"
+# toggle-pane: "u" — свободный префикс (не занят дефолтом ни как ключ, ни
+# как первая буква другого префикса).
+[[mgr.prepend_keymap]]
+on   = ["u", "p"]
+run  = "plugin toggle-pane min-preview"
+desc = "Show or hide the preview pane"
 
-[[manager.prepend_keymap]]
-on   = ["y", "d"]
-run  = "shell 'wl-copy \"$(dirname \"$1\")\"'"
-desc = "Copy directory path"
+[[mgr.prepend_keymap]]
+on   = ["u", "P"]
+run  = "plugin toggle-pane max-preview"
+desc = "Maximize or restore the preview pane"
 
-[[manager.prepend_keymap]]
-on   = ["y", "f"]
-run  = "shell 'wl-copy \"$(basename \"$1\")\"'"
-desc = "Copy filename"
+[[mgr.prepend_keymap]]
+on   = ["u", "h"]
+run  = "plugin toggle-pane min-parent"
+desc = "Show or hide the parent pane"
 
-# ── Terminal ───────────────────────────────────────────────────────────────────
+[[mgr.prepend_keymap]]
+on   = ["u", "H"]
+run  = "plugin toggle-pane max-parent"
+desc = "Maximize or restore the parent pane"
 
-[[manager.prepend_keymap]]
-on   = "<C-t>"
-run  = "shell 'kitty &' --orphan"
-desc = "Open kitty terminal in cwd"
+[[mgr.prepend_keymap]]
+on   = ["u", "r"]
+run  = "plugin toggle-pane reset"
+desc = "Reset pane layout"
 
-# ── Archive extraction ─────────────────────────────────────────────────────────
+# ── Archive ──────────────────────────────────────────────────────────────────
 
-[[manager.prepend_keymap]]
+[[mgr.prepend_keymap]]
 on   = "X"
 run  = "shell 'bsdtar xf \"$1\"' --block --confirm"
 desc = "Extract archive in current directory"
 
-# ── Linemode ───────────────────────────────────────────────────────────────────
+[[mgr.prepend_keymap]]
+on   = "C"
+run  = "shell 'bsdtar cvzf \"$(basename \"$PWD\").tar.gz\" -- \"$@\"' --block --confirm"
+desc = "Compress selected files into tar.gz"
 
-[[manager.prepend_keymap]]
-on   = ["L", "s"]
-run  = "linemode size"
-desc = "Linemode: file size"
+# ── Quick directory navigation ─────────────────────────────────────────────────
+# gh/gc/gd/gt уже есть в дефолте (home/.config/Downloads/trash) — здесь
+# только то, чего в дефолте нет.
 
-[[manager.prepend_keymap]]
-on   = ["L", "m"]
-run  = "linemode mtime"
-desc = "Linemode: modification time"
+[[mgr.prepend_keymap]]
+on   = ["g", "D"]
+run  = "cd ~/Documents"
+desc = "→ ~/Documents"
 
-[[manager.prepend_keymap]]
-on   = ["L", "p"]
-run  = "linemode permissions"
-desc = "Linemode: rwx permissions"
+[[mgr.prepend_keymap]]
+on   = ["g", "p"]
+run  = "cd ~/Pictures"
+desc = "→ ~/Pictures"
 
-[[manager.prepend_keymap]]
-on   = ["L", "n"]
-run  = "linemode none"
-desc = "Linemode: off"
+[[mgr.prepend_keymap]]
+on   = ["g", "V"]
+run  = "cd ~/Videos"
+desc = "→ ~/Videos"
 
-# ── Tasks panel ────────────────────────────────────────────────────────────────
+[[mgr.prepend_keymap]]
+on   = ["g", "M"]
+run  = "cd ~/Music"
+desc = "→ ~/Music"
 
-[[manager.prepend_keymap]]
-on   = "T"
-run  = "tasks_show"
-desc = "Background tasks panel"
+[[mgr.prepend_keymap]]
+on   = ["g", "T"]
+run  = "cd ~/.local/share/Trash/files"
+desc = "→ Trash (raw dir, without the trash plugin)"
+
+[[mgr.prepend_keymap]]
+on   = ["g", "d"]
+run  = "cd /mnt/disk/"
+
+# ── Copy path to clipboard (wl-clipboard) ─────────────────────────────────────
+# Дефолтные cc/cd/cf копируют путь во внутренний yank-буфер yazi, а не в
+# системный клипборд — эти биндят именно wl-copy, дополняют, не дублируют.
+# ВАЖНО: префикс "<A-y>", а не "y" — "y" уже занят как самостоятельное
+# действие (yank), и последовательность с тем же первым символом ломает
+# его (см. yazi issue #2479). "y" в общем-то никогда не должен быть первым
+# символом биндинга-последовательности.
+
+[[mgr.prepend_keymap]]
+on   = ["<A-y>", "p"]
+run  = "shell 'wl-copy \"$1\"'"
+desc = "Copy absolute path to clipboard"
+
+[[mgr.prepend_keymap]]
+on   = ["<A-y>", "d"]
+run  = "shell 'wl-copy \"$(dirname \"$1\")\"'"
+desc = "Copy directory path to clipboard"
+
+[[mgr.prepend_keymap]]
+on   = ["<A-y>", "f"]
+run  = "shell 'wl-copy \"$(basename \"$1\")\"'"
+desc = "Copy filename to clipboard"
+
+# ── Terminal ───────────────────────────────────────────────────────────────────
+
+[[mgr.prepend_keymap]]
+on   = "<C-t>"
+run  = "shell 'kitty &' --orphan"
+desc = "Open kitty terminal in cwd"
+
+# ── GUI file manager (Nautilus) ────────────────────────────────────────────────
+# <A-o>/<A-O> свободны: в дефолте из Alt-комбинаций заняты только
+# <A-b>/<A-d>/<A-f>/<A-j>/<A-k>, а <A-p> занят выше (paste в CWD).
+# --orphan — GUI переживает выход из yazi и не блокирует TUI.
+
+[[mgr.prepend_keymap]]
+on   = "<A-o>"
+run  = "shell 'p=\"${1:-$PWD}\"; if [ -d \"$p\" ]; then nautilus -- \"$p\"; else nautilus --select -- \"$p\"; fi' --orphan"
+desc = "Open hovered directory in Nautilus (file → its folder, file selected)"
+
+[[mgr.prepend_keymap]]
+on   = "<A-O>"
+run  = "shell 'nautilus -- \"$PWD\"' --orphan"
+desc = "Open current directory (CWD) in Nautilus"
+
+# ── Fn keys ────────────────────────────────────────────────────────────────────
+# В дефолте (yazi 26.5.6) из Fn-ряда занят только <F1> = help, остальные
+# свободны. Раскладка в духе MC/Norton: F2 — rename, F7 — create, F9 — chmod.
+# Дублируют, а не заменяют, существующие r / a / cm.
+
+[[mgr.prepend_keymap]]
+on   = "<F2>"
+run  = "rename --cursor=before_ext"
+desc = "Rename selected file(s)"
+
+[[mgr.prepend_keymap]]
+on   = "<F7>"
+run  = "create"
+desc = "Create a file (name ending with / creates a directory)"
+
+[[mgr.prepend_keymap]]
+on   = "<F9>"
+run  = "plugin chmod"
+desc = "Chmod on selected files"
