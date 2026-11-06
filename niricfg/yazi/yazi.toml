@@ -17,12 +17,12 @@ image_quality = 80
 
 [opener]
 edit = [
-  { run = 'vim "$@"',   desc = "vim",   block = true },
-  { run = 'micro "$@"', desc = "micro", block = true },
-  { run = 'nano "$@"',  desc = "nano",  block = true },
+  { run = 'vim %s',   desc = "vim",   block = true },
+  { run = 'micro %s', desc = "micro", block = true },
+  { run = 'nano %s',  desc = "nano",  block = true },
 ]
 open = [
-  { run = 'xdg-open "$@"', desc = "xdg-open" },
+  { run = 'xdg-open %s', desc = "xdg-open" },
 ]
 media = [
   { run = 'ffplay "$1"', desc = "ffplay", orphan = true },
@@ -30,17 +30,63 @@ media = [
 image = [
   # gimp не установлен на момент правки — команда прописана заранее,
   # заработает как только появится пакет.
-  { run = 'gimp "$@"', desc = "GIMP", orphan = true },
+  { run = 'gimp %s', desc = "GIMP", orphan = true },
 ]
 video = [
-  { run = 'vlc "$@"', desc = "VLC", orphan = true },
+  { run = 'vlc %s', desc = "VLC", orphan = true },
 ]
-office = [
-  { run = 'libreoffice "$@"', desc = "LibreOffice", orphan = true },
+word = [
+ { run = '/home/$USER/Applications/wordcraft*.AppImage %s', desc = "WordCraft", orphan = true},
+
+  #{ run = 'echo "0=[$0] 1=[$1] all=[$@]" > /tmp/yazi-args.txt', desc = "debug", orphan = true },
+]
+sheets = [
+ { run = '/home/$USER/Applications/gridcraft*.AppImage %s', desc = "GridCraft", orphan = true},
+]
+pdf = [
+ { run = '/home/$USER/Applications/pdfcraft*.AppImage %s', desc = "pdfCraft", orphan = true},
+]
+photoshop = [
+ { run = '/home/$USER/Applications/photocraft*.AppImage %s', desc = "PhotoCraft", orphan = true},
+]
+design = [
+ { run = '/home/$USER/Applications/designcraft*.AppImage %s', desc = "DesignCraft", orphan = true},
+]
+deck = [
+ { run = '/home/$USER/Applications/deckcraft*.AppImage %s', desc = "DeckCraft", orphan = true},
 ]
 
 [open]
 rules = [
+  # текст
+  { mime = "application/vnd.openxmlformats-officedocument.wordprocessingml.*", use = ["word", "open"] },
+  { mime = "application/msword",                      use = ["word", "open"] },
+  { mime = "application/vnd.oasis.opendocument.text", use = ["word", "open"] },
+  { mime = "application/rtf",                         use = ["word", "open"] },
+  { mime = "application/vnd.openxmlformats-officedocument.wordprocessingml.document",                         use = ["word", "open"] },
+  { url = "*.docx" , use = ["word", "open"] },
+  # таблицы
+  { mime = "application/vnd.openxmlformats-officedocument.spreadsheetml.*", use = ["sheets", "open"] },
+  { mime = "application/vnd.ms-excel",                       use = ["sheets", "open"] },
+  { mime = "application/vnd.oasis.opendocument.spreadsheet", use = ["sheets", "open"] },
+  { url = "*.xlsx", use = ["sheets", "open"] },
+
+  # pdf
+  { mime = "application/pdf", use = ["pdf", "open"] },
+
+  # графика
+  { mime = "image/vnd.adobe.photoshop", use = ["photoshop", "open"] },
+  { mime = "image/svg+xml",             use = ["design", "edit", "open"] },
+  { mime = "image/*",                   use = ["open", "photoshop", "design"] },
+
+  # презентации
+  { url = "*.pptx",                     use = ["deck", "open"] },
+  { mime = "application/vnd.openxmlformats-officedocument.presentationml.presentation.*", use = ["deck", "open"] },
+
+
+  # ...остальные твои правила (text/*, video/*, audio/*, и т.д.)
+  { mime = "*", use = ["open", "edit"] },
+
   { mime = "text/*",           use = ["edit", "open"] },
   { mime = "application/json", use = ["edit", "open"] },
   { mime = "application/xml",  use = ["edit"] },
@@ -49,22 +95,14 @@ rules = [
   { mime = "audio/*",          use = ["media", "open"] },
   { mime = "application/pdf",  use = ["office", "open"] },
 
-  # Офисные форматы: docx/xlsx/pptx (OOXML), doc/xls/ppt (legacy MS),
-  # odt/ods/odp (OpenDocument), rtf — всё через LibreOffice первым делом.
-  { mime = "application/vnd.openxmlformats-officedocument.*", use = ["office", "open"] },
-  { mime = "application/vnd.oasis.opendocument.*",            use = ["office", "open"] },
-  { mime = "application/vnd.ms-*",                             use = ["office", "open"] },
-  { mime = "application/msword",                               use = ["office", "open"] },
-  { mime = "application/rtf",                                  use = ["office", "open"] },
-
   { mime = "*",                use = ["open", "edit"] },
 ]
 
 [plugin]
-prepend_fetchers = [
-  { url = "*",  run = "git", group = "git" },
-  { url = "*/", run = "git", group = "git" },
-]
+#prepend_fetchers = [
+#  { url = "*",  run = "git", group = "git" },
+#  { url = "*/", run = "git", group = "git" },
+#]
 
 [tasks]
 file_workers    = 5
